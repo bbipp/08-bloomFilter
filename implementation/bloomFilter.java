@@ -1,9 +1,16 @@
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 class bloomFilter {
     // storage for the data structure
     private Boolean[] bit;
+
+    /* storage for seeds
+     * slightly inefficient but allows for programatic creation of hashing functions
+     * an alternative would be to hard code a handful, but this is not great for large inputs
+     */
+    private long[] seeds;
 
     // number of hashing functions
     private int k;
@@ -12,16 +19,23 @@ class bloomFilter {
     private int m;
 
     // expected number of elements to be added
-    private int n;
+    private int n = 0;
+
+    // defaults to making bllom filter with 1% false positive rate
+    bloomFilter() {
+        this.m = this.getMByP(1);
+        bit = new Boolean[this.m];
+    }
 
     // creates bloomFilter at specific P
     bloomFilter(float P) {
-        this.m = this.setMByP(P);
+        this.m = this.getMByP(P);
         bit = new Boolean[this.m];
     }
 
     // creates a bloomFilter of size m
     bloomFilter(int m) {
+        this.m = m;
         bit = new Boolean[this.m];
     }
 
@@ -31,7 +45,7 @@ class bloomFilter {
     }
 
     // sets m to guarantee a probability P on n inputs
-    public int setMByP(float P) {
+    public int getMByP(float P) {
         return (int)-((n * Math.log(P)) / Math.pow(Math.log(2), 2));
     }
 
@@ -50,15 +64,40 @@ class bloomFilter {
         return (int)((this.m / this.n) * Math.log(2));
     }
 
-    // wrapper for the hashing
+    // method to add a string
+    public void add(String s) {
+        for(int i = 0; i < m; i++) {
+            long h = hash(s, seeds[i]);
+            bit[(int) (h % (long)m)] = true;
+        }
+    }
+
+    // wrapper for string hashing
     public long hash(String s, long seed) {
         byte[] m = s.getBytes();
         return Murmur3.hash_x86_32(m, s.length(), seed);
     }
+
+    // method to add an int
+    public void add(int n) {
+        for(int i = 0; i < m; i++) {
+            long h = hash(n, seeds[i]);
+            bit[(int) (h % (long)m)] = true;
+        }
+    }
+
+    // wrapper for int hashing
+    public long hash(int n, long seed) {
+        BigInteger bigInt = BigInteger.valueOf(n);      
+        byte[] b = bigInt.toByteArray();
+        return Murmur3.hash_x86_32(b, b.length, seed);
+    }
+
+
     
     public static void main(String[] args) {
         bloomFilter bf = new bloomFilter(1);
-        long x = bf.hash("test", 2538058380l);
+        long x = bf.hash(1, 2538058380l);
 
         System.out.println(x);
 
