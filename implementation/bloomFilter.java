@@ -1,9 +1,16 @@
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.ThreadLocalRandom;
 
 class bloomFilter {
     // storage for the data structure
     private Boolean[] bit;
+
+    /* storage for seeds since cannot easily store hashing functions in java
+     * doesn't increase size of implementation since you must store hashing functions to remain consistent
+     * slight increases runtime since you must calculate the hashing function from the seed every time
+     */
+    private long[] seeds;
 
     // number of hashing functions
     private int k;
@@ -23,6 +30,13 @@ class bloomFilter {
     // creates a bloomFilter of size m
     bloomFilter(int m) {
         bit = new Boolean[this.m];
+    }
+
+    public void setSeeds(int k) {
+        this.k = k;
+        for(int i = 0; i < k; i++) {
+            seeds[i] = ThreadLocalRandom.current().nextLong();
+        }
     }
 
     // calculates the probability of false positive
