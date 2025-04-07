@@ -3,7 +3,7 @@ all:
 
 java: bloomFilter.java
 	javac bloomFilter.java
-	java bloomFilter
+	java bloomFilter < io/test.txt
 
 python: bloomFilter.py
 	python3 bloomFilter.py

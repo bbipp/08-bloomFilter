@@ -1,11 +1,12 @@
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
 class bloomFilter {
     // storage for the data structure
-    private Boolean[] bit;
+    private boolean[] bit;
 
     /* storage for seeds since cannot easily store hashing functions in java
      * doesn't increase size of implementation since you must store hashing functions to remain consistent
@@ -23,25 +24,35 @@ class bloomFilter {
     private int n = 0;
 
     // defaults to making bllom filter with 1% false positive rate
-    bloomFilter() {
-        this.m = this.getMByP(1);
-        bit = new Boolean[this.m];
+    bloomFilter(int n) {
+        this.m = this.getMByP(0.01, n);
+        this.n = n;
+        bit = new boolean[this.m];
+        this.k = this.optimalK(this.m, n);
+        setSeeds(this.k);
     }
 
     // creates bloomFilter at specific P
-    bloomFilter(float P) {
-        this.m = this.getMByP(P);
-        bit = new Boolean[this.m];
+    bloomFilter(float P, int n) {
+        this.m = this.getMByP(P, n);
+        this.n = n;
+        bit = new boolean[this.m];
+        this.k = this.optimalK(this.m, n);
+        setSeeds(this.k);
     }
 
     // creates a bloomFilter of size m
-    bloomFilter(int m) {
+    bloomFilter(int m, int n) {
         this.m = m;
-        bit = new Boolean[this.m];
+        this.n = n;
+        bit = new boolean[this.m];
+        this.k = this.optimalK(m, n);
+        setSeeds(this.k);
     }
 
     public void setSeeds(int k) {
         this.k = k;
+        seeds = new long[k];
         for(int i = 0; i < k; i++) {
             seeds[i] = ThreadLocalRandom.current().nextLong();
         }
@@ -53,7 +64,7 @@ class bloomFilter {
     }
 
     // sets m to guarantee a probability P on n inputs
-    public int getMByP(float P) {
+    public int getMByP(double P, int n) {
         return (int)-((n * Math.log(P)) / Math.pow(Math.log(2), 2));
     }
 
@@ -74,7 +85,7 @@ class bloomFilter {
 
     // method to add a string
     public void add(String s) {
-        for(int i = 0; i < m; i++) {
+        for(int i = 0; i < k; i++) {
             long h = hash(s, seeds[i]);
             bit[(int) (h % (long)m)] = true;
         }
@@ -88,7 +99,7 @@ class bloomFilter {
 
     // method to add an int
     public void add(int n) {
-        for(int i = 0; i < m; i++) {
+        for(int i = 0; i < k; i++) {
             long h = hash(n, seeds[i]);
             bit[(int) (h % (long)m)] = true;
         }
@@ -101,17 +112,48 @@ class bloomFilter {
         return Murmur3.hash_x86_32(b, b.length, seed);
     }
 
-
-    
-    public static void main(String[] args) {
-        bloomFilter bf = new bloomFilter(1);
-        long x = bf.hash(1, 2538058380l);
-
-        System.out.println(x);
-
+    public boolean contains(int n) {
+        for(int i = 0; i < k; i++) {
+            long h = hash(n, seeds[i]);
+            if (bit[(int) (h % (long)m)] == false) {
+                return false;
+            }
+        }
+        return true;
     }
 
+    public boolean contains(String s) {
+        for(int i = 0; i < k; i++) {
+            long h = hash(s, seeds[i]);
+            if (bit[(int) (h % (long)m)] == false) {
+                return false;
+            }
+        }
+        return true;
+    }
     
+    public static void main(String[] args) {
+        bloomFilter bf;
+
+        Scanner myObj = new Scanner(System.in);  // Create a Scanner object
+        int numInputs = myObj.nextInt();
+        int numChecks = myObj.nextInt();
+        bf = new bloomFilter(numInputs);
+        myObj.nextLine();
+        for (int i = 0; i < numInputs; i++) {
+            bf.add(myObj.nextLine());
+        }
+
+        int in = 0;
+
+        for (int i = 0; i < numChecks; i++) {
+            if (bf.contains(myObj.nextLine())) {
+                in++;
+            }
+        }
+        myObj.close();
+        System.out.println(in);
+    }
 }
 
 /* murmur3 hashing algorithm implementation taken from
