@@ -3,6 +3,10 @@
 #include <bitset>
 #include <vector>
 #include <string> 
+#include <random>
+#include <unordered_set>
+#include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -29,87 +33,142 @@ struct Packet {
     }
 };
 
-vector<Packet> makeSeries(int source, int total) {
+int getRandFromSet(unordered_set<int> s) {
+    int size = s.size();
+    auto p = next(s.begin(), rand() % size);
+    return *p;
+}
+
+
+vector<Packet> makeSeries(int source, int total, unordered_set<int> badData) {
     vector<Packet> p;
+    vector<int> index = {0, 0};
+  
     for (int i = 1; i <= total; i++) {
         p.push_back(Packet(source, i, total, generateRand32()));
     }
+
+    if (rand() % 2 || 1) {
+        index[0] = getRandFromSet(badData);
+        index[1] = getRandFromSet(badData);
+        for (int i = 0; i < index.size(); i++) {
+            int loc = (rand() % total);
+            p[loc] = Packet(source, loc + 1, total, index[i]);
+        }
+    }
+
     return p;
 }
 
-vector<Packet> makeBadSeries(int source, int total, vector<int> badData) {
+vector<Packet> makeBadSeries(int source, int total, unordered_set<int> badData) {
     vector<Packet> p;
-    int startBad = (rand() % total) - badData.size();
-    
-    vector<int> randData;
-    for (int i = 0; i < total; i++) {
-        randData.push_back(generateRand32());
-    }
-    int j = 0;
-    for (int i = 1; i <= total; i++) {
+    vector<int> index;
 
-        if (i > startBad || i <= startBad + badData.size()) {
-            p.push_back(Packet(source, i, total, badData[j]));
-            j++;
-        }
-        else
-            p.push_back(Packet(source, i, total, randData[i]));
+    int numBad = rand() % (total + 1 - 3) + 3;
+    index.assign(numBad, 0);
+
+    for (int i = 1; i <= total; i++) {
+        p.push_back(Packet(source, i, total, generateRand32()));
     }
+
+    int f = -1;
+    int s = -1;
+    int t = -1;
+
+    for (int i = 0; i < numBad; i++) {
+        index[i] = getRandFromSet(badData);
+        int loc = (rand() % total);
+        while (loc == f || loc == s || loc == t)
+            loc = (rand() % total);
+        p[loc] = Packet(source, loc + 1, total, index[i]);
+        
+    }
+
     return p;
 }
 
 int main(int argc, char *argv[]) {
-    long long numDoNotServe;
-    int numBitstrings;
-    long long numPackets;
+    std::random_device rd;    
+    std::mt19937_64 eng(rd()); 
+    std::uniform_int_distribution<unsigned long long> distr;
+  
+    long long a = (distr(eng) + 2) % (long)(pow(2, 20));
+    long long b = (distr(eng) + 2) % (long)(pow(2, 11));
+    long long p = (distr(eng) + 4) % (long)(pow(2, 500));
+    long long u = (distr(eng) + 2) % (long)(pow(2, 20));
 
-    cin >> numDoNotServe;
-    cin >> numBitstrings;
-    cin >> numPackets;
-
-    numPackets = pow(2, numPackets);
-    numPackets = numPackets - (rand() % numPackets);
+    if (argc >= 2) {
+        a = stoll(argv[1]);
+        b = stoll(argv[2]);
+        p = stoll(argv[3]);
+        u = stoll(argv[4]);
+    }
 
     srand(time(0));
-    int numGoodIP = (rand() % numPackets);
 
-    cout << numDoNotServe << '\n';
-    vector<int> doNotServeIP;
-    for (int i = 0; i < numDoNotServe; i++) {
+    unordered_set<int> badIP;
+    cout << a << '\n';
+    for (long long i = 0; i < a; i++) {
+        int ip = rand();
+        badIP.insert(ip);
+        cout << bitset<32>(ip) << '\n';
+    }
+
+    unordered_set<int> badData;
+    cout << b << '\n';
+    for (long long i = 0; i < b; i++) {
+        int data = rand();
+        badData.insert(data);
+        cout << bitset<32>(data) << '\n';
+    }
+
+    cout << p << '\n';
+
+    unordered_set<int> goodIP;
+    while (p > 0) {
+        int size = rand() % (p) + 1;
+        p -= size;
+        vector<Packet> packets;
         int ip = generateRand32();
-        doNotServeIP.push_back(ip);
-        cout << bitset<32>(ip)<<std::endl;
-    }
-
-    cout << numBitstrings << '\n';
-    vector<int> badData(numBitstrings);
-    for (int i = 0; i < numBitstrings; i++) {
-        int data32 = generateRand32();
-        badData.push_back(data32);
-        cout << bitset<32>(data32) << '\n';
-    }
-
-    long long totalIP = numGoodIP + numDoNotServe + (rand() % numPackets * pow(2, 10));
-
-    vector<int> notSentIP;
-    for (int i = 0; i < totalIP - numGoodIP - numDoNotServe; i++) {
-        notSentIP.push_back(generateRand32());
-    }
-    
-    vector<vector<Packet>> packets(numPackets);
-    if (argc == 1) {
-        while (numPackets > 0) {
-            long long nextPacketSize = numPackets % (rand() % numPackets);
-            if (rand() % 2 == 1)
-                packets.push_back()
+        if (rand() % 2 && size >= 3) {
+            packets = makeBadSeries(ip, size, badData);
+            badIP.insert(ip);
+        }
+        else {
+            packets = makeSeries(ip, size, badData);
+            goodIP.insert(ip);
+        }
+        for (int i = 0; i < size; i++) {
+            packets[i].print();
         }
     }
-    else if (*argv[1] == '1') {
-        cout << "tes";
-    }
 
-    for (int i = 0; i < p.size(); i++) {
-        p[i].print();
+
+    string output;
+    cin >> output;
+    ofstream expectedOutput;
+    expectedOutput.open(output);
+
+    cout << u << '\n';
+
+    int numBad = 0;
+    int numGood = 0;
+    for (long long i = 0; i < u; i++) {
+        int ip = rand();
+        if ((rand() % 2) && numBad < a) {
+            auto f = next(badIP.begin(), numBad);
+            cout << bitset<32>(*f) << '\n';
+            numBad++;
+            expectedOutput << 0;
+        }
+        else if ((rand() % 3) && numGood < goodIP.size()) {
+            auto g = next(goodIP.begin(), numGood);
+            cout << bitset<32>(*g) << '\n';
+            numGood++;
+            expectedOutput << 1;
+        }
+        else {
+            cout << bitset<32>(ip) << '\n';
+        }
     }
-    return 0;
 }
