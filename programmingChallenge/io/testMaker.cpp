@@ -82,15 +82,11 @@ int main(int argc, char *argv[]) {
     }
 
     cout << numBitstrings << '\n';
-    vector<vector<int>> badData(numBitstrings);
+    vector<int> badData(numBitstrings);
     for (int i = 0; i < numBitstrings; i++) {
-        int size = (rand() % 64 + 1);
-        for (int j = 0; j < size; j++) {
-            int data32 = generateRand32();
-            badData[i].push_back(data32);
-            cout << bitset<32>(data32);
-        }
-        cout << '\n';
+        int data32 = generateRand32();
+        badData.push_back(data32);
+        cout << bitset<32>(data32) << '\n';
     }
 
     long long totalIP = numGoodIP + numDoNotServe + (rand() % numPackets * pow(2, 10));
@@ -101,14 +97,11 @@ int main(int argc, char *argv[]) {
     }
     
     vector<vector<Packet>> packets(numPackets);
-
-    vector<Packet> p = makeBadSeries(generateRand32(), 2, badData[0]);
-
     if (argc == 1) {
         while (numPackets > 0) {
             long long nextPacketSize = numPackets % (rand() % numPackets);
             if (rand() % 2 == 1)
-                packets.push_back(makeSeries())
+                packets.push_back()
         }
     }
     else if (*argv[1] == '1') {
