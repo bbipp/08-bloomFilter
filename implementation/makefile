@@ -1,9 +1,12 @@
 all:
 	make java
+	make cpp
 
 java: bloomFilter.java
 	javac bloomFilter.java
-	java bloomFilter < io/test.txt
 
 python: bloomFilter.py
 	python3 bloomFilter.py
+
+cpp: bloomFilter.cpp
+	g++ -o bloomFilter bloomFilter.cpp murmur3.c

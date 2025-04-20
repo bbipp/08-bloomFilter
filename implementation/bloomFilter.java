@@ -152,7 +152,8 @@ class bloomFilter {
             }
         }
         myObj.close();
-        System.out.println(in);
+        System.out.println("in: " + in);
+        System.out.println("out: " + (numChecks - in));
     }
 }
 
