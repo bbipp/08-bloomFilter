@@ -52,7 +52,9 @@ class BloomFilter:
 
     def set_seeds(self, k):
         self.k = k
-        self.seeds = [self.thread_local_random.next_long() for _ in range(k)]
+        rng = random.Random()  # Create a separate RNG instance
+        self.seeds = [rng.getrandbits(64) for _ in range(k)]
+        # self.seeds = [self.thread_local_random.next_long() for _ in range(k)]
 
     def add_string(self, s):
         for i in range(self.k):
@@ -92,8 +94,8 @@ class BloomFilter:
 
     def contains(self, s):
         for i in range(self.k):
-            h = self.hash_int(s, self.seeds[i])
-            if not self.bit[h % self.m]:  # Check if the bit is False
+            h = self.hash_string(s, self.seeds[i])  # use string hash here
+            if not self.bit[h % self.m]:
                 return False
         return True
 
@@ -113,7 +115,8 @@ def main():
         if bf.contains(s):
             in_ += 1
 
-    print(in_)
+    print(f"In: {in_}")
+    print(f"Out: {num_checks - in_}")
 
 if __name__ == "__main__":
     main()
