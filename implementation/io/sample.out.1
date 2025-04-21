@@ -1,28 +1,2 @@
 in: 6
 out: 4
-    long numToAdd;
-    long numToTest;
-
-    cin >> numToAdd;
-    cin >> numToTest;
-
-    bloomFilter bf = bloomFilter(numToAdd);
-    
-    for (long i = 0; i < numToAdd; i++) {
-        int toAdd;
-        cin >> toAdd;
-        bf.add(&toAdd);
-    }
-
-    int in = 0;
-    for (long i = 0; i < numToTest; i++) {
-        int toTest;
-        cin >> toTest;
-        if (bf.contains(&toTest))
-            in++;
-        cout << bf.contains(&toTest);
-    }
-
-    cout << "in: " << in << '\n';
-    cout << "out: " << numToTest - in << '\n';
-    return 0;
