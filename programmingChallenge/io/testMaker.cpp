@@ -29,7 +29,7 @@ struct Packet {
     }
 
     void print() {
-        cout << bitset<32>(this->source) << bitset<32>(this->seq) << bitset<32>(this->total) << bitset<32>(this->data) << '\n';
+        cout << bitset<32>(this->source) << bitset<32>(this->data) << '\n';
     }
 };
 

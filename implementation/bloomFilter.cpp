@@ -21,7 +21,7 @@ struct bloomFilter {
     // expected number of elements to be added
     int n = 0;
 
-    // defaults to making bllom filter with 1% false positive rate
+    // defaults to making bloom filter with 1% false positive rate
     bloomFilter(int n) {
         this->m = this->getMByP(0.01, n);
         this->n = n;
