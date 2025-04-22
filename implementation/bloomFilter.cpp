@@ -8,8 +8,14 @@
 using namespace std;
 
 struct bloomFilter {
+
+    // storage for the data structure
     vector<bool> bit;
 
+    /* storage for seeds since cannot easily store hashing functions in cpp
+     * doesn't increase size of implementation since you must store hashing functions to remain consistent
+     * slight increases runtime since you must calculate the hashing function from the seed every time
+     */
     vector<int> seeds;
 
     // number of hashing functions
@@ -48,6 +54,7 @@ struct bloomFilter {
         setSeeds(this->k);
     }
 
+    // sets k seed values to random numbers
     void setSeeds(int k) {
         this->k = k;
         srand(time(0));
