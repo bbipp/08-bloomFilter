@@ -1,6 +1,7 @@
 import math
 import random
 import hashlib
+import mmh3
 
 IPMASK = 0xffffffff
 
@@ -8,7 +9,7 @@ class BloomFilter:
     def __init__(self, n, m=None, P=0.01, col=None):
         self.n = n
         self.m = m if m is not None else self.get_m_by_p(P, n)
-        self.collisions = [False] * self.m if col is not None else self.collisions = None
+        self.collisions = ([False] * self.m) if col is not None else None
         self.bit = [False] * self.m
         self.k = self.optimal_k(self.m, n)
         self.set_seeds(self.k)
@@ -93,21 +94,21 @@ def get_ip(packet):
 
 def main():
     num_bad_ips = int(input())
-    bad_ips_bf = bloomFilter(num_bad_ips)
+    bad_ips_bf = BloomFilter(num_bad_ips)
 
     for i in range(num_bad_ips):
         bad_ip = input()
-        bad_ips_bf.add(bad_ip)
+        bad_ips_bf.add_string(bad_ip)
 
     num_bad_data_packets = int(input())
-    bad_data_packets_bf = bloomFilter(num_bad_data_packets)
+    bad_data_packets_bf = BloomFilter(num_bad_data_packets)
 
     for _ in range(num_bad_data_packets):
         bd = input()
-        bad_data_packets_bf.add(bd)
+        bad_data_packets_bf.add_string(bd)
 
     num_packets_to_test = int(input())
-    good_ips_bf = bloomFilter(num_packets_to_test // 3, True)
+    good_ips_bf = BloomFilter(num_packets_to_test // 3, col=True)
 
     bad_messages = 0
     packet_count = 0
@@ -124,33 +125,33 @@ def main():
         if current_ip != ipin:
             if bad_messages >= 3: # IP address is now blacklisted
                 good_ips_bf.delete(current_ip)
-                bad_ips_bf.add(current_ip)
+                bad_ips_bf.add_string(current_ip)
             else:
-                good_ips.addCollision(current_ip)
+                good_ips_bf.add_collision(current_ip)
             bad_messages = 0
             current_ip = ipin
 
-        if bad_data.contains(data):
+        if bad_data_packets_bf.contains(data):
             bad_messages += 1
 
         packet_count += 1
 
-        if packet_count == num_packets:
+        if packet_count == num_packets_to_test:
             if bad_messages >= 3:
-                good_ips.del_(ipin)
-                bad_ips.add(ipin)
+                good_ips_bf.delete(ipin)
+                bad_ips_bf.add_string(ipin)
             else:
-                good_ips.add(ipin)
+                good_ips_bf.add_string(ipin)
 
-        good_ips.addCollision(ipin)
+        good_ips_bf.add_collision(ipin)
 
     num_checks = int(input())
 
     for i in range(num_checks):
         ip = input()
-        if good_ips.contains(ip):
+        if good_ips_bf.contains(ip):
             print(1, end='')
-        elif bad_ips.contains(ip):
+        elif bad_ips_bf.contains(ip):
             print(0, end='')
 
 if __name__ == "__main__":
