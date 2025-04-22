@@ -211,8 +211,8 @@ int main() {
             }
             else {
                 //cout << currentIP << '\n';
-
-                goodIPs.addCollision(currentIP);
+                if (!badIPs.contains(currentIP))
+                    goodIPs.addCollision(currentIP);
 
             }
             badMessages = 0;
