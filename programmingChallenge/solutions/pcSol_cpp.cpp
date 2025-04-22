@@ -137,9 +137,11 @@ class bloomFilter {
 
 
     bool contains(string n) {
+
         for(int i = 0; i < k; i++) {
             size_t s = this->seeds[i];
             hash_combine(s, n);
+
             if (bit[s % m] == false) {
                 return false;
             }
@@ -196,25 +198,28 @@ int main() {
 
         if (packetCount == 0)
             currentIP = ipin;
+
         
+        if (badData.contains(data)) {
+            badMessages++;
+        }
+    
         if (currentIP != ipin) {
             if (badMessages >= 3) {
                 goodIPs.del(currentIP);
                 badIPs.add(currentIP);
             }
             else {
-                cout << currentIP << '\n';
+                //cout << currentIP << '\n';
 
                 goodIPs.addCollision(currentIP);
-                cout << currentIP << '\n';
+
             }
             badMessages = 0;
             currentIP = ipin;
         }
 
 
-        if (badData.contains(data))
-            badMessages++;
 
         packetCount++;
 
@@ -240,8 +245,11 @@ int main() {
             cout << 1;
         else if (badIPs.contains(ip))
             cout << 0;
-        //  cout << '\n';
     }
+
+    // for (int i = 0; i < goodIPs.m; i++) {
+    //     cout << goodIPs.bit[i] << ", ";
+    // }
 
     return 0;
 }
