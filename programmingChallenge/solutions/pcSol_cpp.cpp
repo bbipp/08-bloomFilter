@@ -1,4 +1,3 @@
-#include "murmur3.h"
 #include <iostream>
 #include <math.h>
 #include <bitset>
@@ -99,48 +98,39 @@ class bloomFilter {
     }
 
     // method to add an int
-    void add(void *n) {
+    void add(string n) {
         for (int i = 0; i < k; ++i) {
             int s = this->seeds[i];
-            uint32_t h = hash(n, s);
+            uint32_t h = hash<string>{}(n);
             this->bit[h % m] = true;
         }
     }
 
     // method to add an int that can be deleted
-    void addCollision(void *n) {
+    void addCollision(string n) {
         for (int i = 0; i < k; ++i) {
             int s = this->seeds[i];
-            uint32_t h = hash(n, s);
+            uint32_t h = hash<string>{}(n);
             if (this->bit[h % m] == true)
                 this->collisions[h % m] = true;
         }
     }
 
-    void del(void *n) {
+    void del(string n) {
         for (int i = 0; i < k; ++i) {
             int s = this->seeds[i];
-            uint32_t h = hash(n, s);
+            uint32_t h = hash<string>{}(n);
             if (this->collisions[h % m] == false) {
                 this->bit[h % m] = false;
             }
         }
     }
 
-    // wrapper for int hashing
-    uint32_t hash(void *n, int seed) {
-        double i = stod(*(string *)n);
-        uint32_t o[4];
-        MurmurHash3_x86_32(n, 32, seed, o);
-        cout << *o << '\n';
-        fflush(stdout);
-        return *(uint32_t*)o; 
-    }
 
-    bool contains(void *n) {
+    bool contains(string n) {
         for(int i = 0; i < k; i++) {
             int s = this->seeds[i];
-            uint32_t h = hash(n, s);
+            uint32_t h = hash<string>{}(n);
             if (bit[h % m] == false) {
                 return false;
             }
@@ -167,33 +157,45 @@ int main() {
     for (int i = 0; i < numBadIP; i++) {
         string badIP;
         cin >> badIP;
-        badIPs.add(&badIP);
+        badIPs.add(badIP);
     }
 
-    // cin >> numBadData;
+    cin >> numBadData;
 
-    // bloomFilter badData;
-    // badData = bloomFilter(numBadData);
+    bloomFilter badData;
+    badData = bloomFilter(numBadData);
     
-    // for (int i = 0; i < numBadData; i++) {
-    //     string bD;
-    //     cin >> bD;
-    //     badData.add(&bD);
-    // }
+    for (int i = 0; i < numBadData; i++) {
+        string bD;
+        cin >> bD;
+        badData.add(bD);
+    }
 
-    // cin >> numPackets;
+    cin >> numPackets;
 
-    // bloomFilter goodIPs = bloomFilter(numPackets / 3);
-    // bloomFilter oneStrike = bloomFilter(numPackets / 3);
-    // bloomFilter twoStrike = bloomFilter(numPackets / 3);
+    bloomFilter goodIPs = bloomFilter(numPackets / 3, true);
 
-    // int curIP = -1;
+    string curIP;
+    int badMessages = 0;
 
-    // for (int i = 0; i < numPackets; i++) {
-    //     string p;
-    //     cin >> p;
+    for (int i = 0; i < numPackets; i++) {
+        string p;
+        cin >> p;
+        string ip = p.substr(0, 32);
+
+        if (i == 0)
+            curIP = ip;
         
-    // }
+        // TODO buggy but will work -> some way to delete that isn't broken
+
+
+        string data = p.substr(32, 32);
+        
+        if (badData.contains(data)) {
+            badMessages++;
+        }
+        
+    }
 
     cin >> numChecks;
 
@@ -201,14 +203,16 @@ int main() {
         string ip;
         cin >> ip;
 
-        // if (goodIPs.contains(&ip))
-        //     cout << 1;
-        // else 
-        cout << "ans: " << badIPs.contains(&ip) << '\n';
-
+        if (goodIPs.contains(ip))
+            cout << 1;
+        else if (badIPs.contains(ip))
+            cout << 0;
 
     }
-fflush(stdout);
+    // cout << '\n';
 
+    for (int i = 0; i < goodIPs.bit.size(); i++) {
+        cout << goodIPs.bit[i] << '\n';
+    }
     return 0;
 }
