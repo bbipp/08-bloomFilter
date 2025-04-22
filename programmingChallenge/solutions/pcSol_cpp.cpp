@@ -2,9 +2,16 @@
 #include <math.h>
 #include <bitset>
 #include <vector>
-#include <string> 
+#include <string>
 
 using namespace std;
+
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
 
 int IPMASK = 0xffffffff;
 
@@ -30,7 +37,7 @@ class bloomFilter {
 
     // defaults to making bloom filter with 1% false positive rate
     bloomFilter(int n) {
-        this->m = this->getMByP(0.01, n);
+        this->m = this->getMByP(0.001, n);
         this->n = n;
         this->bit.assign(this->m, false);
         this->k = this->optimalK(this->m, n);
@@ -100,28 +107,30 @@ class bloomFilter {
     // method to add an int
     void add(string n) {
         for (int i = 0; i < k; ++i) {
-            int s = this->seeds[i];
-            uint32_t h = hash<string>{}(n);
-            this->bit[h % m] = true;
+            size_t s = this->seeds[i];
+            hash_combine(s, n);
+            this->bit[s % m] = true;
         }
     }
 
     // method to add an int that can be deleted
     void addCollision(string n) {
         for (int i = 0; i < k; ++i) {
-            int s = this->seeds[i];
-            uint32_t h = hash<string>{}(n);
-            if (this->bit[h % m] == true)
-                this->collisions[h % m] = true;
+            size_t s = this->seeds[i];
+            hash_combine(s, n);
+            if (this->bit[s % m] == true)
+                this->collisions[s % m] = true;
+            else 
+                this->bit[s % m] = true;
         }
     }
 
     void del(string n) {
         for (int i = 0; i < k; ++i) {
-            int s = this->seeds[i];
-            uint32_t h = hash<string>{}(n);
-            if (this->collisions[h % m] == false) {
-                this->bit[h % m] = false;
+            size_t s = this->seeds[i];
+            hash_combine(s, n);
+            if (this->collisions[s % m] == false) {
+                this->bit[s % m] = false;
             }
         }
     }
@@ -129,9 +138,9 @@ class bloomFilter {
 
     bool contains(string n) {
         for(int i = 0; i < k; i++) {
-            int s = this->seeds[i];
-            uint32_t h = hash<string>{}(n);
-            if (bit[h % m] == false) {
+            size_t s = this->seeds[i];
+            hash_combine(s, n);
+            if (bit[s % m] == false) {
                 return false;
             }
         }
@@ -175,26 +184,46 @@ int main() {
 
     bloomFilter goodIPs = bloomFilter(numPackets / 3, true);
 
-    string curIP;
     int badMessages = 0;
+    int packetCount = 0;
+    string currentIP = "";
 
-    for (int i = 0; i < numPackets; i++) {
+    while (packetCount < numPackets) {
         string p;
         cin >> p;
-        string ip = p.substr(0, 32);
-
-        if (i == 0)
-            curIP = ip;
-        
-        // TODO buggy but will work -> some way to delete that isn't broken
-
-
+        string ipin = p.substr(0, 32);
         string data = p.substr(32, 32);
+
+        if (packetCount == 0)
+            currentIP = ipin;
         
-        if (badData.contains(data)) {
-            badMessages++;
+        if (currentIP != ipin) {
+            if (badMessages >= 3) {
+                goodIPs.del(currentIP);
+                badIPs.add(currentIP);
+            }
+            else
+                goodIPs.addCollision(currentIP);
+            badMessages = 0;
+            currentIP = ipin;
         }
-        
+
+
+        if (badData.contains(data))
+            badMessages++;
+
+        packetCount++;
+
+        if (packetCount == numPackets) {
+            if (badMessages >= 3) {
+                goodIPs.del(ipin);
+                badIPs.add(ipin);
+            }
+            else
+                goodIPs.add(ipin);
+        }
+        goodIPs.addCollision(ipin);
+
     }
 
     cin >> numChecks;
@@ -202,17 +231,13 @@ int main() {
     for (int i = 0; i < numChecks; i++) {
         string ip;
         cin >> ip;
-
+        // cout << ip << '\n';
         if (goodIPs.contains(ip))
             cout << 1;
         else if (badIPs.contains(ip))
             cout << 0;
-
+        // cout << '\n';
     }
-    // cout << '\n';
 
-    for (int i = 0; i < goodIPs.bit.size(); i++) {
-        cout << goodIPs.bit[i] << '\n';
-    }
     return 0;
 }
