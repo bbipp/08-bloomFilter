@@ -32,7 +32,7 @@ class BloomFilter:
         else:
             self.m = m # creates a bloomFilter of size m
         self.n = n
-        self.bit = [None] * self.m
+        self.bit = [False] * self.m
         self.k = self.optimal_k(self.m, self.n)
         self.set_seeds(self.k)
 
@@ -53,7 +53,8 @@ class BloomFilter:
     def set_seeds(self, k):
         self.k = k
         rng = random.Random()  # Create a separate RNG instance
-        self.seeds = [rng.getrandbits(64) for _ in range(k)]
+        self.seeds = [rng.randint(0, 2147483647) for _ in range(k)]
+        #self.seeds = [rng.getrandbits(64) for _ in range(k)]
         # self.seeds = [self.thread_local_random.next_long() for _ in range(k)]
 
     def add_string(self, s):
@@ -66,7 +67,7 @@ class BloomFilter:
         # Convert string to bytes
         byte_array = s.encode('utf-8')
         # Call Murmur3 hash function
-        return mmh3.hash(bytes(byte_array), len(s), seed)
+        return mmh3.hash(byte_array, seed) & 0xffffffff
 
     def add_int(self, n):
         for i in range(self.k):
@@ -78,7 +79,7 @@ class BloomFilter:
         big_int_n = int(n)
         byte_array = self.to_byte_array(big_int_n)
         # byte_array = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big') or b'\0'
-        return mmh3.hash(bytes(byte_array), len(byte_array), seed)
+        return mmh3.hash(byte_array, seed) & 0xffffffff
 
     # https://stackoverflow.com/questions/23870859/tobytearray-in-python
     def to_byte_array(self, num):
@@ -100,8 +101,7 @@ class BloomFilter:
         return True
 
 def main():
-    num_inputs = int(input())
-    num_checks = int(input())
+    num_inputs, num_checks = map(int, input().split())
     bf = BloomFilter(num_inputs)
 
     for _ in range(num_inputs):
