@@ -202,8 +202,12 @@ int main() {
                 goodIPs.del(currentIP);
                 badIPs.add(currentIP);
             }
-            else
+            else {
+                cout << currentIP << '\n';
+
                 goodIPs.addCollision(currentIP);
+                cout << currentIP << '\n';
+            }
             badMessages = 0;
             currentIP = ipin;
         }
@@ -222,7 +226,7 @@ int main() {
             else
                 goodIPs.add(ipin);
         }
-        goodIPs.addCollision(ipin);
+        //goodIPs.addCollision(ipin);
 
     }
 
@@ -231,12 +235,12 @@ int main() {
     for (int i = 0; i < numChecks; i++) {
         string ip;
         cin >> ip;
-        // cout << ip << '\n';
+        //  cout << ip << '\n';
         if (goodIPs.contains(ip))
             cout << 1;
         else if (badIPs.contains(ip))
             cout << 0;
-        // cout << '\n';
+        //  cout << '\n';
     }
 
     return 0;

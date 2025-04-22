@@ -64,7 +64,7 @@ vector<Packet> makeBadSeries(int source, int total, unordered_set<int> badData) 
     vector<Packet> p;
     vector<int> index;
 
-    int numBad = rand() % (total + 1 - 3) + 3;
+    int numBad = rand() % (total + 1 - 3) + 4;
     index.assign(numBad, 0);
 
     for (int i = 1; i <= total; i++) {
@@ -77,9 +77,15 @@ vector<Packet> makeBadSeries(int source, int total, unordered_set<int> badData) 
 
     for (int i = 0; i < numBad; i++) {
         index[i] = getRandFromSet(badData);
-        int loc = (rand() % total);
+        int loc = (rand() % (total - 1));
         while (loc == f || loc == s || loc == t)
             loc = (rand() % total);
+        if (i == 0)
+            f = loc;
+        else if (i == 1)
+            s = loc;
+        else if (i == 3)
+            t = loc;
         p[loc] = Packet(source, loc + 1, total, index[i]);
         
     }
