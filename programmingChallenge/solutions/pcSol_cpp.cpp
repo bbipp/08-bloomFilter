@@ -227,7 +227,7 @@ int main() {
         packetCount++;
 
         if (packetCount == numPackets) {
-            cout << badMessages << '\n';
+
             if (badMessages >= 3) {
                 goodIPs.del(ipin);
                 badIPs.add(ipin);
@@ -245,10 +245,10 @@ int main() {
         string ip;
         cin >> ip;
         //  cout << ip << '\n';
-        if (goodIPs.contains(ip))
-            cout << 1;
-        else if (badIPs.contains(ip))
+        if (badIPs.contains(ip))
             cout << 0;
+        else if (goodIPs.contains(ip))
+            cout << 1;
     }
 
     // for (int i = 0; i < goodIPs.m; i++) {

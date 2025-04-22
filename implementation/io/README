@@ -8,6 +8,6 @@ It can be created by running the following:
 
 make
 ./testMaker < in.sample.in.3 > sample.in.3
-(NOTE: this may crash your editor and takes up about 1 GB)
+(NOTE: this may crash your editor and takes up about 1 GB. It also takes a very long time to run in python)
 
 The last two lines of this file will contain the expected output

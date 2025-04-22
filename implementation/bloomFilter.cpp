@@ -85,10 +85,9 @@ struct bloomFilter {
     void add(void *n) {
         for (int i = 0; i < k; ++i) {
             int s = seeds[i];
-            uint32_t h = hash(n, s);
+            uint32_t h = hash(n, s); // gets k hashes and sets relevant indices to true in bit
             bit[h % m] = true;
         }
-
     }
 
     // wrapper for int hashing
@@ -99,16 +98,16 @@ struct bloomFilter {
         return *(uint32_t*)o; 
     }
 
+    // checks if bf contains a value
     bool contains(void *n) {
         for(int i = 0; i < k; i++) {
             int s = seeds[i];
             uint32_t h = hash(n, s);
-
-            if (bit[h % m] == false) {
+            if (bit[h % m] == false) { // if any index is false, return early
                 return false;
             }
         }
-        return true;
+        return true; // if all hashed indices are true, return true
     }
 };
 
@@ -121,6 +120,7 @@ int main() {
 
     bloomFilter bf = bloomFilter(numToAdd);
     
+    // reads in and adds values to bloom filter
     for (long i = 0; i < numToAdd; i++) {
         long toAdd;
         cin >> toAdd;
@@ -128,6 +128,8 @@ int main() {
     }
 
     int in = 0;
+
+    // checks if test object is in the bloom filter
     for (long i = 0; i < numToTest; i++) {
         long toTest;
         cin >> toTest;
