@@ -174,7 +174,7 @@ int main() {
     cin >> numBadData;
 
     bloomFilter badData;
-    badData = bloomFilter(numBadData);
+    badData = bloomFilter((float)0.00001, numBadData);
     
     for (int i = 0; i < numBadData; i++) {
         string bD;
@@ -200,13 +200,13 @@ int main() {
             currentIP = ipin;
 
         
-        if (badData.contains(data)) {
-            badMessages++;
-        }
+
     
         if (currentIP != ipin) {
+            // cout << badMessages << '\n';
             if (badMessages >= 3) {
-                goodIPs.del(currentIP);
+                if (goodIPs.contains(currentIP))
+                    goodIPs.del(currentIP);
                 badIPs.add(currentIP);
             }
             else {
@@ -219,11 +219,15 @@ int main() {
             currentIP = ipin;
         }
 
-
+        if (badData.contains(data)) {
+            // cout << data << '\n';
+            badMessages++;
+        }
 
         packetCount++;
 
         if (packetCount == numPackets) {
+            cout << badMessages << '\n';
             if (badMessages >= 3) {
                 goodIPs.del(ipin);
                 badIPs.add(ipin);
