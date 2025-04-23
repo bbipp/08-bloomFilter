@@ -4,6 +4,10 @@ import random
 import threading
 import struct
 
+# x = 1
+# y = x.to_bytes(math.ceil(x.bit_length() / 8), "big")
+# print (mmh3.mmh3_32_uintdigest(y, 2538058380))
+
 class ThreadLocalRandom:
     def __init__(self):
         self.local = threading.local()
@@ -46,15 +50,16 @@ class BloomFilter:
     def optimal_k(self, m, n):
         return int((m / n) * math.log(2))
 
-    # sets k seed values to random numbers
     def set_seeds(self, k):
         self.k = k
         rng = random.Random()  # Create a separate RNG instance
         self.seeds = [rng.randint(0, 2147483647) for _ in range(k)]
+        #self.seeds = [rng.getrandbits(64) for _ in range(k)]
+        # self.seeds = [self.thread_local_random.next_long() for _ in range(k)]
 
     def add_string(self, s):
         for i in range(self.k):
-            h = self.hash_string(s, self.seeds[i]) # gets k hashes and sets relevant indices to true in bit
+            h = self.hash_string(s, self.seeds[i])
             self.bit[h % self.m] = True
 
     # wrapper for string hashing -- in python3 long is also included in int
@@ -63,6 +68,30 @@ class BloomFilter:
         byte_array = s.encode('utf-8')
         # Call Murmur3 hash function
         return mmh3.hash(byte_array, seed) & 0xffffffff
+
+    def add_int(self, n):
+        for i in range(self.k):
+            h = self.hash_int(n, self.seeds[i])
+            self.bit[h % self.m] = True
+
+    def hash_int(self, n, seed):
+        # Convert string to bytes
+        big_int_n = int(n)
+        byte_array = self.to_byte_array(big_int_n)
+        # byte_array = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big') or b'\0'
+        return mmh3.hash(byte_array, seed) & 0xffffffff
+
+    # https://stackoverflow.com/questions/23870859/tobytearray-in-python
+    def to_byte_array(self, num):
+        bytea = []
+        n = num
+        while n:
+            bytea.append(n % 256)
+            n //= 256
+        n_bytes = len(bytea)
+        if 2 ** (n_bytes * 8 - 1) <= num < 2 ** (n_bytes * 8):
+            bytea.append(0)
+        return bytearray(reversed(bytea))
 
     def contains(self, s):
         for i in range(self.k):
@@ -75,15 +104,12 @@ def main():
     num_inputs, num_checks = map(int, input().split())
     bf = BloomFilter(num_inputs)
 
-
-    # reads in and adds values to bloom filter
     for _ in range(num_inputs):
         s = input().strip()
         bf.add_string(s)
 
     in_ = 0
 
-    # checks if test object is in the bloom filter
     for _ in range(num_checks):
         s = input().strip()
         if bf.contains(s):
