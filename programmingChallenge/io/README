@@ -17,3 +17,6 @@ OR
 make
 ./testMaker > test.in.X
 test.out.X
+
+These may segfault / the output might be incorrect.
+All test cases used and numbered are verified, but new test cases made may not be
