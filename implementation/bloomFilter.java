@@ -264,7 +264,6 @@ class Murmur3 {
          // tail
  
          // Advance offset to the unprocessed tail of the data.
- //		offset += (nblocks << 4); // nblocks * 16;
          
          buffer.compact();
          buffer.flip();

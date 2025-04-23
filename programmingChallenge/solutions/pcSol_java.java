@@ -341,9 +341,7 @@ class Murmur3 {
              k1 |= (data[i4 + 1] & UNSIGNED_MASK) << 8;
              k1 |= (data[i4 + 2] & UNSIGNED_MASK) << 16;
              k1 |= (data[i4 + 3] & UNSIGNED_MASK) << 24;
-             
- //			int k1 = (data[i4] & 0xff) + ((data[i4 + 1] & 0xff) << 8) + ((data[i4 + 2] & 0xff) << 16) + ((data[i4 + 3] & 0xff) << 24);
-             
+                          
              k1 = (k1 * X86_32_C1) & UINT_MASK;
              k1 = rotl32(k1, 15);
              k1 = (k1 * X86_32_C2) & UINT_MASK;
@@ -409,12 +407,6 @@ class Murmur3 {
              h2 = h2 * 5 + 0x38495ab5;
          }
  
-         // ----------
-         // tail
- 
-         // Advance offset to the unprocessed tail of the data.
- //		offset += (nblocks << 4); // nblocks * 16;
-         
          buffer.compact();
          buffer.flip();
  
