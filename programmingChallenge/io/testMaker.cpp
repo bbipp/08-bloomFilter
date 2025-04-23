@@ -161,13 +161,13 @@ int main(int argc, char *argv[]) {
     int numGood = 0;
     for (long long i = 0; i < u; i++) {
         int ip = rand();
-        if ((rand() % 2) && numBad < a) {
+        if ((rand() % 17) && numBad < a) {
             auto f = next(badIP.begin(), numBad);
             cout << bitset<32>(*f) << '\n';
             numBad++;
             expectedOutput << 0;
         }
-        else if ((rand() % 3) && numGood < goodIP.size()) {
+        else if ((rand() % 29) && numGood < goodIP.size()) {
             auto g = next(goodIP.begin(), numGood);
             cout << bitset<32>(*g) << '\n';
             numGood++;
