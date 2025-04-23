@@ -180,6 +180,7 @@ def main():
             if bad_messages >= 3: # IP address is now blacklisted
                 if good_ips_bf.contains(current_ip):
                     good_ips_bf.delete(current_ip)
+
                 bad_ips_bf.add_string(current_ip)
             else:
                 if not bad_ips_bf.contains(current_ip):
@@ -203,10 +204,10 @@ def main():
 
     for i in range(num_checks):
         ip = read_non_empty_line()
-        if good_ips_bf.contains(ip):
-            print(1, end='')
-        elif bad_ips_bf.contains(ip):
+        if bad_ips_bf.contains(ip):
             print(0, end='')
+        elif good_ips_bf.contains(ip):
+            print(1, end='')
 
 if __name__ == "__main__":
     main()
