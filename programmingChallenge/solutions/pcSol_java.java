@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 class bloomFilter {
     // storage for the data structure
-    private boolean[] bit;
+    public boolean[] bit;
 
     /* storage for seeds since cannot easily store hashing functions in java
      * doesn't increase size of implementation since you must store hashing functions to remain consistent
@@ -17,10 +17,10 @@ class bloomFilter {
     private boolean[] collisions;
 
     // number of hashing functions
-    private int k;
+    public int k;
 
     // size of BIT array
-    private int m;
+    public int m;
 
     // expected number of elements to be added
     private int n = 0;
@@ -128,9 +128,8 @@ class bloomFilter {
     // method to add an int that can be deleted
     void addCollision(String n) {
         for (int i = 0; i < k; ++i) {
-            long s = this.seeds[i];
-            long h = hash(n, s);
-            int index = Math.floorMod(h, m);
+            long h = hash(n, seeds[i]);
+            int index = (int) (h % (long)m);
             if (this.bit[index]) {
                 this.collisions[index] = true;
             } else {
@@ -141,10 +140,9 @@ class bloomFilter {
 
     void del(String n) {
         for (int i = 0; i < k; ++i) {
-            long s = this.seeds[i];
-            int h = (int) hash(n, s);
-            if (this.collisions[h % m] == false) {
-                this.bit[h % m] = false;
+            int h = (int) hash(n, seeds[i]);
+            if (this.collisions[(int) (h % (long)m)] == false) {
+                this.bit[(int) (h % (long)m)] = false;
             }
         }
     }
@@ -176,7 +174,7 @@ public class pcSol_java {
 
         int numBadIP = scanner.nextInt();
 
-        bloomFilter badIPs = new bloomFilter(numBadIP);
+        bloomFilter badIPs = new bloomFilter((float)0.00001, numBadIP);
         String badIP = scanner.nextLine();
         for (int a = 0; a<numBadIP; a++) {
             badIP = scanner.nextLine();
@@ -194,9 +192,10 @@ public class pcSol_java {
             badData.add(bData);
         }
 
+
         int numPackets = scanner.nextInt();
 
-        bloomFilter goodIPs = new bloomFilter(numPackets / 3, true);
+        bloomFilter goodIPs = new bloomFilter(numPackets, true);
 
         int badMessages = 0;
         int packetCount = 0;
@@ -208,12 +207,14 @@ public class pcSol_java {
         while (packetCount < numPackets) {
             p = scanner.nextLine();
             String ipin = p.substring(0, 32);
-            String data = p.substring(32, 32);
-    
+            String data = p.substring(32, 64);
+
+
             if (packetCount == 0)
                 currentIP = ipin;
         
-            if (currentIP != ipin) {
+            if (currentIP.equals(ipin)) {
+                // System.out.println(badMessages);
                 // cout << badMessages << '\n';
                 if (badMessages >= 3) {
                     if (goodIPs.contains(currentIP))
