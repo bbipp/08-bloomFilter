@@ -202,6 +202,8 @@ public class pcSol_java {
         int packetCount = 0;
         String currentIP = "";
 
+        String res = "";
+
         String p = scanner.nextLine(); //read newline \n
         while (packetCount < numPackets) {
             p = scanner.nextLine();
@@ -255,11 +257,14 @@ public class pcSol_java {
             ip = scanner.nextLine();
 
             if (badIPs.contains(ip)) {
-                System.out.print('0');
+                //System.out.print('n');
+                res = res + "0";
             } else if (goodIPs.contains(ip)) {
-                System.out.print('1');
+                //System.out.print('y');
+                res = res + "1";
             }
         }
+        System.out.println(res);
 
         scanner.close();
     }
