@@ -163,7 +163,7 @@ int main() {
     cin >> numBadIP;
 
     bloomFilter badIPs;
-    badIPs = bloomFilter(numBadIP);
+    badIPs = bloomFilter((float)0.00001, numBadIP);
 
     for (int i = 0; i < numBadIP; i++) {
         string badIP;
@@ -184,7 +184,7 @@ int main() {
 
     cin >> numPackets;
 
-    bloomFilter goodIPs = bloomFilter(numPackets / 3, true);
+    bloomFilter goodIPs = bloomFilter(numPackets, true);
 
     int badMessages = 0;
     int packetCount = 0;
@@ -240,6 +240,7 @@ int main() {
     }
 
     cin >> numChecks;
+    //  cout << numChecks << '\n';
 
     for (int i = 0; i < numChecks; i++) {
         string ip;
