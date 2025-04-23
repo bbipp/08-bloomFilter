@@ -25,7 +25,7 @@ class bloomFilter {
     // expected number of elements to be added
     private int n = 0;
 
-    // defaults to making bllom filter with 1% false positive rate
+    // defaults to making bloom filter with 1% false positive rate
     bloomFilter(int n) {
         this.m = this.getMByP(0.01, n);
         this.n = n;
@@ -34,6 +34,7 @@ class bloomFilter {
         setSeeds(this.k);
     }
 
+    // creates a bloom filter and initialized collisions array
     bloomFilter(int n, boolean col) {
         this.m = this.getMByP(0.01, n);
         this.n = n;
@@ -63,6 +64,7 @@ class bloomFilter {
         setSeeds(this.k);
     }
 
+    // initializes the array of seeds that will be referenced continually
     public void setSeeds(int k) {
         this.k = k;
         seeds = new long[k];
@@ -138,6 +140,7 @@ class bloomFilter {
         }
     }
 
+    // method to remove an int without affecting the validity of the bloom filter
     void del(String n) {
         for (int i = 0; i < k; ++i) {
             long h = hash(n, seeds[i]);
@@ -147,6 +150,7 @@ class bloomFilter {
         }
     }
 
+    // method to check if an int is stored in the bloom filter
     public boolean contains(int n) {
         for(int i = 0; i < k; i++) {
             long h = hash(n, seeds[i]);
@@ -157,6 +161,7 @@ class bloomFilter {
         return true;
     }
 
+    // method to check if an int (string form) is stored in the bloom filter 
     public boolean contains(String s) {
         for(int i = 0; i < k; i++) {
             long h = hash(s, seeds[i]);
@@ -170,101 +175,112 @@ class bloomFilter {
 
 public class pcSol_java {
     public static void main(String[] args) {
+        // initialize scanner that will read in input
         Scanner scanner = new Scanner(System.in);
 
+        // read in the number of initial bad IP addresses
         int numBadIP = scanner.nextInt();
 
+        // initialize a bloomfilter with a 0.00001 probability of a false positive
         bloomFilter badIPs = new bloomFilter((float)0.00001, numBadIP);
-        String badIP = scanner.nextLine();
+        String badIP = scanner.nextLine(); // eat new line character
+
+        //add each bad IP to the badIP bloomfilter
         for (int a = 0; a<numBadIP; a++) {
             badIP = scanner.nextLine();
-            //System.out.println(a + ": " + badIP);
             badIPs.add(badIP);
         }
 
+        // read in the number of bad data
         int numBadData = scanner.nextInt();
 
+        // initialize a bloomfilter with a 0.00001 probability of a false positive
         bloomFilter badData = new bloomFilter((float)0.00001, numBadData);
-        String bData = scanner.nextLine();
+        String bData = scanner.nextLine(); // eat new line character
+
+        //add each bad data to the badData bloomfilter
         for (int b = 0; b<numBadData; b++) {
             bData = scanner.nextLine();
-            //System.out.println(b + ": " + bData);
             badData.add(bData);
         }
 
-
+        // read in the number of packets that need to be tested
         int numPackets = scanner.nextInt();
 
+        // initialize a bloomfilter with a 0.01 probability of a false positive 
+        // and initialize the collisions array
         bloomFilter goodIPs = new bloomFilter(numPackets, true);
 
         int badMessages = 0;
         int packetCount = 0;
         String currentIP = "";
 
+        //initialize the output string
         String res = "";
 
-        String p = scanner.nextLine(); //read newline \n
+        String p = scanner.nextLine(); // eat new line character
+
+        //process each incoming packet
         while (packetCount < numPackets) {
             p = scanner.nextLine();
-            String ipin = p.substring(0, 32);
-            String data = p.substring(32, 64);
-
+            String ipin = p.substring(0, 32); //split by source IP address
+            String data = p.substring(32, 64); //split by data bitstring
 
             if (packetCount == 0)
                 currentIP = ipin;
         
             if (!currentIP.equals(ipin)) {
-                 //System.out.println(ipin);
-                // cout << badMessages << '\n';
+                // if the IP address has sent at least 3 bad data, remove it from the bloom filter of good IPs and add to the bloom filters of bad IPs
                 if (badMessages >= 3) {
                     if (goodIPs.contains(currentIP))
                         goodIPs.del(currentIP);
                     badIPs.add(currentIP);
-                }
-                else {
-                    //cout << currentIP << '\n';
+                } else {
                     if (!badIPs.contains(currentIP))
                         goodIPs.addCollision(currentIP);
-    
                 }
                 badMessages = 0;
                 currentIP = ipin;
             }
     
+            //increase badMessages counter if the packet data is in the bad data bloom filter
             if (badData.contains(data)) {
-                // cout << data << '\n';
                 badMessages++;
             }
     
             packetCount++;
     
+            // update good and bad IP bloom filters
             if (packetCount == numPackets) {
-    
                 if (badMessages >= 3) {
                     goodIPs.del(ipin);
                     badIPs.add(ipin);
                 }
                 else
                     goodIPs.add(ipin);
-            }
-            //goodIPs.addCollision(ipin);
-    
+            }    
         }
 
+        // read in the number of queries
         int numChecks = scanner.nextInt();
 
-        String ip = scanner.nextLine();
+        String ip = scanner.nextLine(); // eat new line character
+
+        // process each query and store:
+            // 0 if the source IP is bad
+            // 1 if the source ID is good
+            // nothing if the source ID did not make a request
         for (int i = 0; i < numChecks; i++) {
             ip = scanner.nextLine();
 
             if (badIPs.contains(ip)) {
-                //System.out.print('n');
                 res = res + "0";
             } else if (goodIPs.contains(ip)) {
-                //System.out.print('y');
                 res = res + "1";
             }
         }
+
+        // print result
         System.out.print(res);
 
         scanner.close();
