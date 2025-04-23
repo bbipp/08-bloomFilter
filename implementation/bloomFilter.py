@@ -7,6 +7,14 @@ import struct
 class BloomFilter:
     # defaults to making bloom filter with 1% false positive rate
     def __init__(self, n, P=0.01, m=None):
+        """
+        n: Expected number of elements.
+        m: Size of bit array. If None, computed from false positive
+           probability P using m = -(n * ln(P)) / (ln2)^2.
+        P: Target false positive probability.
+        bit: Bloom Filter array representation
+        k: Number of hash functions
+        """
         if m is None:
             self.m = self.get_m_by_p(P, n) # makes bloomFilter size depending on P and n
         else:
