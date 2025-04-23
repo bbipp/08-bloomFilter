@@ -1,4 +1,3 @@
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Scanner;
@@ -50,6 +49,7 @@ class bloomFilter {
         setSeeds(this.k);
     }
 
+    // sets k seed values to random numbers
     public void setSeeds(int k) {
         this.k = k;
         seeds = new long[k];
@@ -86,7 +86,7 @@ class bloomFilter {
     // method to add a string
     public void add(String s) {
         for(int i = 0; i < k; i++) {
-            long h = hash(s, seeds[i]);
+            long h = hash(s, seeds[i]);     // gets k hashes and sets relevant indices to true in bit
             bit[(int) (h % (long)m)] = true;
         }
     }
@@ -97,39 +97,14 @@ class bloomFilter {
         return Murmur3.hash_x86_32(m, s.length(), seed);
     }
 
-    // method to add an int
-    public void add(int n) {
-        for(int i = 0; i < k; i++) {
-            long h = hash(n, seeds[i]);
-            bit[(int) (h % (long)m)] = true;
-        }
-    }
-
-    // wrapper for int hashing
-    public long hash(int n, long seed) {
-        BigInteger bigInt = BigInteger.valueOf(n);      
-        byte[] b = bigInt.toByteArray();
-        return Murmur3.hash_x86_32(b, b.length, seed);
-    }
-
-    public boolean contains(int n) {
-        for(int i = 0; i < k; i++) {
-            long h = hash(n, seeds[i]);
-            if (bit[(int) (h % (long)m)] == false) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public boolean contains(String s) {
         for(int i = 0; i < k; i++) {
             long h = hash(s, seeds[i]);
-            if (bit[(int) (h % (long)m)] == false) {
+            if (bit[(int) (h % (long)m)] == false) { // if any index is false, return early
                 return false;
             }
         }
-        return true;
+        return true; // if all indices are true, return true
     }
     
     public static void main(String[] args) {
@@ -140,12 +115,15 @@ class bloomFilter {
         int numChecks = myObj.nextInt();
         bf = new bloomFilter(numInputs);
         myObj.nextLine();
+
+        // reads in and adds values to bloom filter
         for (int i = 0; i < numInputs; i++) {
             bf.add(myObj.nextLine());
         }
 
         int in = 0;
 
+        // checks if test object is in the bloom filter
         for (int i = 0; i < numChecks; i++) {
             if (bf.contains(myObj.nextLine())) {
                 in++;
@@ -156,6 +134,9 @@ class bloomFilter {
         System.out.println("out: " + (numChecks - in));
     }
 }
+
+
+
 
 /* murmur3 hashing algorithm implementation taken from
  * https://github.com/sangupta/murmur/blob/master/src/main/java/com/sangupta/murmur/Murmur3.java

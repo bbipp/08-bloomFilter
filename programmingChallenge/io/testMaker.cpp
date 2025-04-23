@@ -98,10 +98,10 @@ int main(int argc, char *argv[]) {
     std::mt19937_64 eng(rd()); 
     std::uniform_int_distribution<unsigned long long> distr;
   
-    long long a = (distr(eng) + 2) % (long)(pow(2, 20));
-    long long b = (distr(eng) + 2) % (long)(pow(2, 11));
-    long long p = (distr(eng) + 4) % (long)(pow(2, 500));
-    long long u = (distr(eng) + 2) % (long)(pow(2, 20));
+    long long a = (distr(eng) + 2) % (long)(pow(2, 10)) + 2;
+    long long b = (distr(eng) + 2) % (long)(pow(2, 10)) + 2;
+    long long p = (distr(eng) + 4) % (long)(pow(2, 10)) + 4;
+    long long u = (distr(eng) + 2) % (long)(pow(2, 10)) + 2;
 
     if (argc >= 2) {
         a = stoll(argv[1]);
@@ -161,13 +161,13 @@ int main(int argc, char *argv[]) {
     int numGood = 0;
     for (long long i = 0; i < u; i++) {
         int ip = rand();
-        if ((rand() % 2) && numBad < a) {
+        if ((rand() % 17) && numBad < a) {
             auto f = next(badIP.begin(), numBad);
             cout << bitset<32>(*f) << '\n';
             numBad++;
             expectedOutput << 0;
         }
-        else if ((rand() % 3) && numGood < goodIP.size()) {
+        else if ((rand() % 29) && numGood < goodIP.size()) {
             auto g = next(goodIP.begin(), numGood);
             cout << bitset<32>(*g) << '\n';
             numGood++;

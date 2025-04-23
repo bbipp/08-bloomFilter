@@ -3,11 +3,11 @@ It takes input from stdin in the form of two integers
  - the first is the number of values to be added to the bloom filter
  - the second is the number of values that are going to be tested against the bloom filter
 
-We ran into issues with test case size, so sample 3 is provided as input to this file.
+We ran into issues with test case size, so sample 4 is provided as input to this file.
 It can be created by running the following:
 
 make
-./testMaker < in.sample.in.3 > sample.in.3
-(NOTE: this may crash your editor and takes up about 1 GB)
+./testMaker < in.sample.in.4 > sample.in.4
+(NOTE: this may crash your editor and takes up about 1 GB. It also takes a very long time to run in python)
 
 The last two lines of this file will contain the expected output

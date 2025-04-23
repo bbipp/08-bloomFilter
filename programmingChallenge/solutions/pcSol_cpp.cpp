@@ -137,9 +137,11 @@ class bloomFilter {
 
 
     bool contains(string n) {
+
         for(int i = 0; i < k; i++) {
             size_t s = this->seeds[i];
             hash_combine(s, n);
+
             if (bit[s % m] == false) {
                 return false;
             }
@@ -161,7 +163,7 @@ int main() {
     cin >> numBadIP;
 
     bloomFilter badIPs;
-    badIPs = bloomFilter(numBadIP);
+    badIPs = bloomFilter((float)0.00001, numBadIP);
 
     for (int i = 0; i < numBadIP; i++) {
         string badIP;
@@ -172,7 +174,7 @@ int main() {
     cin >> numBadData;
 
     bloomFilter badData;
-    badData = bloomFilter(numBadData);
+    badData = bloomFilter((float)0.00001, numBadData);
     
     for (int i = 0; i < numBadData; i++) {
         string bD;
@@ -182,7 +184,7 @@ int main() {
 
     cin >> numPackets;
 
-    bloomFilter goodIPs = bloomFilter(numPackets / 3, true);
+    bloomFilter goodIPs = bloomFilter(numPackets, true);
 
     int badMessages = 0;
     int packetCount = 0;
@@ -196,29 +198,36 @@ int main() {
 
         if (packetCount == 0)
             currentIP = ipin;
+
         
+
+    
         if (currentIP != ipin) {
+            // cout << badMessages << '\n';
             if (badMessages >= 3) {
-                goodIPs.del(currentIP);
+                if (goodIPs.contains(currentIP))
+                    goodIPs.del(currentIP);
                 badIPs.add(currentIP);
             }
             else {
-                cout << currentIP << '\n';
+                //cout << currentIP << '\n';
+                if (!badIPs.contains(currentIP))
+                    goodIPs.addCollision(currentIP);
 
-                goodIPs.addCollision(currentIP);
-                cout << currentIP << '\n';
             }
             badMessages = 0;
             currentIP = ipin;
         }
 
-
-        if (badData.contains(data))
+        if (badData.contains(data)) {
+            // cout << data << '\n';
             badMessages++;
+        }
 
         packetCount++;
 
         if (packetCount == numPackets) {
+
             if (badMessages >= 3) {
                 goodIPs.del(ipin);
                 badIPs.add(ipin);
@@ -231,17 +240,21 @@ int main() {
     }
 
     cin >> numChecks;
+    //  cout << numChecks << '\n';
 
     for (int i = 0; i < numChecks; i++) {
         string ip;
         cin >> ip;
         //  cout << ip << '\n';
-        if (goodIPs.contains(ip))
-            cout << 1;
-        else if (badIPs.contains(ip))
+        if (badIPs.contains(ip))
             cout << 0;
-        //  cout << '\n';
+        else if (goodIPs.contains(ip))
+            cout << 1;
     }
+
+    // for (int i = 0; i < goodIPs.m; i++) {
+    //     cout << goodIPs.bit[i] << ", ";
+    // }
 
     return 0;
 }
