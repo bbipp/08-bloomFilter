@@ -4,29 +4,9 @@ import random
 import threading
 import struct
 
-# x = 1
-# y = x.to_bytes(math.ceil(x.bit_length() / 8), "big")
-# print (mmh3.mmh3_32_uintdigest(y, 2538058380))
-
-class ThreadLocalRandom:
-    def __init__(self):
-        self.local = threading.local()
-
-    def get_random(self):
-        if not hasattr(self.local, 'random'):
-            self.local.random = random.Random()
-        return self.local.random
-
-    def seed(self, a=None):
-        self.get_random().seed(a)
-
-    def next_long(self):
-        return self.get_random().getrandbits(64)
-
 class BloomFilter:
     # defaults to making bloom filter with 1% false positive rate
     def __init__(self, n, P=0.01, m=None):
-        self.thread_local_random = ThreadLocalRandom()
         if m is None:
             self.m = self.get_m_by_p(P, n) # makes bloomFilter size depending on P and n
         else:
@@ -50,39 +30,37 @@ class BloomFilter:
     def optimal_k(self, m, n):
         return int((m / n) * math.log(2))
 
+    # sets k seed values to random numbers
     def set_seeds(self, k):
         self.k = k
-        rng = random.Random()  # Create a separate RNG instance
+        rng = random.Random()
         self.seeds = [rng.randint(0, 2147483647) for _ in range(k)]
-        #self.seeds = [rng.getrandbits(64) for _ in range(k)]
-        # self.seeds = [self.thread_local_random.next_long() for _ in range(k)]
 
+    # insertion for a string
     def add_string(self, s):
-        for i in range(self.k):
-            h = self.hash_string(s, self.seeds[i])
-            self.bit[h % self.m] = True
+        for i in range(self.k): # go through all the hash functions
+            h = self.hash_string(s, self.seeds[i]) # get the index from the current hash function
+            self.bit[h % self.m] = True # change the corresponding bit in the bit array to be True
 
-    # wrapper for string hashing -- in python3 long is also included in int
+    # wrapper for string hashing
     def hash_string(self, s, seed):
-        # Convert string to bytes
-        byte_array = s.encode('utf-8')
-        # Call Murmur3 hash function
-        return mmh3.hash(byte_array, seed) & 0xffffffff
+        byte_array = s.encode('utf-8') # Convert string to bytes
+        return mmh3.hash(byte_array, seed) & 0xffffffff # call mmh3 hash function and then do a bit shift to ensure non-negative
 
+    # insertion for a string
     def add_int(self, n):
         for i in range(self.k):
             h = self.hash_int(n, self.seeds[i])
             self.bit[h % self.m] = True
 
+    # wrapper for int hashing
     def hash_int(self, n, seed):
-        # Convert string to bytes
         big_int_n = int(n)
-        byte_array = self.to_byte_array(big_int_n)
-        # byte_array = n.to_bytes((n.bit_length() + 7) // 8, byteorder='big') or b'\0'
-        return mmh3.hash(byte_array, seed) & 0xffffffff
+        byte_array = self.to_byte_array(big_int_n) # convert to bytes
+        return mmh3.hash(byte_array, seed) & 0xffffffff # call mmh3 hash function and then do a bit shift to ensure non-negative
 
-    # https://stackoverflow.com/questions/23870859/tobytearray-in-python
-    def to_byte_array(self, num):
+    # convert an int to a byte array
+    def to_byte_array(self, num): # https://stackoverflow.com/questions/23870859/tobytearray-in-python
         bytea = []
         n = num
         while n:
@@ -93,23 +71,26 @@ class BloomFilter:
             bytea.append(0)
         return bytearray(reversed(bytea))
 
+    # query element membership in Bloom Filter
     def contains(self, s):
-        for i in range(self.k):
-            h = self.hash_string(s, self.seeds[i])  # use string hash here
+        for i in range(self.k): # go through k hash filters
+            h = self.hash_string(s, self.seeds[i])  # get index by hashing element for current hash "seed"
             if not self.bit[h % self.m]:
                 return False
-        return True
+        return True # element only in filter if every index mapped by the hashing functions has been set to True
 
 def main():
     num_inputs, num_checks = map(int, input().split())
     bf = BloomFilter(num_inputs)
 
+    # input
     for _ in range(num_inputs):
         s = input().strip()
         bf.add_string(s)
 
     in_ = 0
 
+    # output
     for _ in range(num_checks):
         s = input().strip()
         if bf.contains(s):
