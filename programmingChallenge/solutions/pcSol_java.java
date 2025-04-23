@@ -140,7 +140,7 @@ class bloomFilter {
 
     void del(String n) {
         for (int i = 0; i < k; ++i) {
-            int h = (int) hash(n, seeds[i]);
+            long h = hash(n, seeds[i]);
             if (this.collisions[(int) (h % (long)m)] == false) {
                 this.bit[(int) (h % (long)m)] = false;
             }
