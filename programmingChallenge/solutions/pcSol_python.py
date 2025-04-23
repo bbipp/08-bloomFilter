@@ -4,6 +4,15 @@ import hashlib
 import mmh3
 
 IPMASK = 0xffffffff
+random.seed(42)
+
+def hash_combine(seed, v):
+    # Compute the hash of v using the built-in hash function
+    v_hash = hash(v)
+    # Combine using similar math to the C++ version:
+    #   seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    new_seed = seed ^ (v_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2))
+    return new_seed
 
 class BloomFilter:
     def __init__(self, n, m=None, P=0.01, col=None):
@@ -16,7 +25,7 @@ class BloomFilter:
 
     def set_seeds(self, k):
         self.k = k
-        rng = random.Random()  # Create a separate RNG instance
+        rng = random.Random(42)  # Create a separate RNG instance
         self.seeds = [rng.randint(0, 2147483647) for _ in range(k)]
 
     # sets m to guarantee a probability P on n inputs
@@ -40,16 +49,24 @@ class BloomFilter:
         return int(h, 16)
     '''
     
-    def add_string(self, s):
+    '''
+    def add_string(self, n):
         for i in range(self.k):
-            h = self.hash_string(s, self.seeds[i])
+            h = self.hash_string(n, self.seeds[i])
             self.bit[h % self.m] = True
 
     # wrapper for string hashing -- in python3 long is also included in int
-    def hash_string(self, s, seed):
-        byte_array = s.encode('utf-8')
+    def hash_string(self, n, seed):
+        byte_array = n.encode('utf-8')
         # created custom one in c++ but I think we can use the built-in python library
         return mmh3.hash(byte_array, seed) & 0xffffffff
+    '''
+
+    def add_string(self, n):
+        for i in range(self.k):
+            s = self.seeds[i]
+            s = hash_combine(s, n)
+            self.bit[s % self.m] = True
 
     # https://stackoverflow.com/questions/23870859/tobytearray-in-python
     def to_byte_array(self, num):
@@ -63,6 +80,7 @@ class BloomFilter:
             bytea.append(0)
         return bytearray(reversed(bytea))
 
+    '''
     # for STRING only....if need contains for an int will need to change
     def contains(self, s):
         for i in range(self.k):
@@ -70,7 +88,17 @@ class BloomFilter:
             if not self.bit[h % self.m]:
                 return False
         return True
+    '''
 
+    def contains(self, n):
+        for i in range(self.k):
+            s = self.seeds[i]
+            s = hash_combine(s, n)  # use string hash here
+            if not self.bit[s % self.m]:
+                return False
+        return True
+
+    '''
     # method to add an int that can be deleted
     def add_collision(self, n: str):
         for i in range(self.k):
@@ -78,13 +106,35 @@ class BloomFilter:
             h = mmh3.hash(n, seed) & 0xffffffff # mmh3.hash returns a signed 32-bit int but we need it unsigned
             if self.bit[h % self.m] == True:
                 self.collisions[h % self.m] = True
+            else:
+                self.bit[h % self.m] = True
+    '''
+
+    def add_collision(self, n: str):
+        for i in range(self.k):
+            s = self.seeds[i]
+            s = hash_combine(s, n)
+            index = s % self.m
+            if self.bit[index]:
+                self.collisions[index] = True
+            else:
+                self.bit[index] = True
+
+    '''
+    def delete(self, n):
+        for i in range(self.k):
+            seed = self.seeds[i]
+            h = mmh3.hash(n, seed) & 0xffffffff # same thing as with add_collision
+            if self.collisions[h % self.m] is False:
+                self.bit[h % self.m] = False
+    '''
 
     def delete(self, n):
         for i in range(self.k):
             s = self.seeds[i]
-            h = mmh3.hash(n, seed) & 0xffffffff # same thing as with add_collision
-            if self.collisions[h % self.m] is False:
-                self.bit[h % self.m] = False
+            s = hash_combine(s, n) # same thing as with add_collision
+            if self.collisions[s% self.m] is False:
+                self.bit[s % self.m] = False
 
 def get_data(packet):
     return IPMASK & packet
@@ -92,30 +142,36 @@ def get_data(packet):
 def get_ip(packet):
     return IPMASK & (packet >> 32)
 
+def read_non_empty_line():
+    line = input().strip()
+    while line == "":
+        line = input().strip()
+    return line
+
 def main():
-    num_bad_ips = int(input())
-    bad_ips_bf = BloomFilter(num_bad_ips)
+    num_bad_ips = int(read_non_empty_line())
+    bad_ips_bf = BloomFilter(n=num_bad_ips, P=0.00001)
 
     for i in range(num_bad_ips):
-        bad_ip = input()
+        bad_ip = read_non_empty_line()
         bad_ips_bf.add_string(bad_ip)
 
-    num_bad_data_packets = int(input())
-    bad_data_packets_bf = BloomFilter(num_bad_data_packets)
+    num_bad_data_packets = int(read_non_empty_line())
+    bad_data_packets_bf = BloomFilter(n=num_bad_data_packets, P=0.00001)
 
     for _ in range(num_bad_data_packets):
-        bd = input()
+        bd = read_non_empty_line()
         bad_data_packets_bf.add_string(bd)
 
-    num_packets_to_test = int(input())
-    good_ips_bf = BloomFilter(num_packets_to_test // 3, col=True)
+    num_packets_to_test = int(read_non_empty_line())
+    good_ips_bf = BloomFilter(num_packets_to_test, col=True)
 
     bad_messages = 0
     packet_count = 0
     current_ip = ""
 
     while packet_count < num_packets_to_test:
-        p = input() # packet
+        p = read_non_empty_line() # packet
         ipin = p[:32]
         data = p[32:64]
 
@@ -124,10 +180,12 @@ def main():
 
         if current_ip != ipin:
             if bad_messages >= 3: # IP address is now blacklisted
-                good_ips_bf.delete(current_ip)
+                if good_ips_bf.contains(current_ip):
+                    good_ips_bf.delete(current_ip)
                 bad_ips_bf.add_string(current_ip)
             else:
-                good_ips_bf.add_collision(current_ip)
+                if not bad_ips_bf.contains(current_ip):
+                    good_ips_bf.add_collision(current_ip)
             bad_messages = 0
             current_ip = ipin
 
@@ -143,12 +201,10 @@ def main():
             else:
                 good_ips_bf.add_string(ipin)
 
-        good_ips_bf.add_collision(ipin)
-
-    num_checks = int(input())
+    num_checks = int(read_non_empty_line())
 
     for i in range(num_checks):
-        ip = input()
+        ip = read_non_empty_line()
         if good_ips_bf.contains(ip):
             print(1, end='')
         elif bad_ips_bf.contains(ip):
