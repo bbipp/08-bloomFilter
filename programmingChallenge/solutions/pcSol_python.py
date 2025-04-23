@@ -40,26 +40,6 @@ class BloomFilter:
     def optimal_k(self, m, n):
         return int((m / n) * math.log(2))
 
-    '''
-    def hash_combine(self, seed, value):
-        # I think this is the python equivalent of the c++ custome bit shifting for hashing
-        h = hashlib.sha256((str(seed) + value).encode()).hexdigest()
-        return int(h, 16)
-    '''
-    
-    '''
-    def add_string(self, n):
-        for i in range(self.k):
-            h = self.hash_string(n, self.seeds[i])
-            self.bit[h % self.m] = True
-
-    # wrapper for string hashing -- in python3 long is also included in int
-    def hash_string(self, n, seed):
-        byte_array = n.encode('utf-8')
-        # created custom one in c++ but I think we can use the built-in python library
-        return mmh3.hash(byte_array, seed) & 0xffffffff
-    '''
-
     def add_string(self, n):
         for i in range(self.k):
             s = self.seeds[i]
@@ -78,16 +58,6 @@ class BloomFilter:
             bytea.append(0)
         return bytearray(reversed(bytea))
 
-    '''
-    # for STRING only....if need contains for an int will need to change
-    def contains(self, s):
-        for i in range(self.k):
-            h = self.hash_string(s, self.seeds[i])  # use string hash here
-            if not self.bit[h % self.m]:
-                return False
-        return True
-    '''
-
     def contains(self, n):
         for i in range(self.k):
             s = self.seeds[i]
@@ -95,18 +65,6 @@ class BloomFilter:
             if not self.bit[s % self.m]:
                 return False
         return True
-
-    '''
-    # method to add an int that can be deleted
-    def add_collision(self, n: str):
-        for i in range(self.k):
-            seed = self.seeds[i]
-            h = mmh3.hash(n, seed) & 0xffffffff # mmh3.hash returns a signed 32-bit int but we need it unsigned
-            if self.bit[h % self.m] == True:
-                self.collisions[h % self.m] = True
-            else:
-                self.bit[h % self.m] = True
-    '''
 
     def add_collision(self, n: str):
         for i in range(self.k):
@@ -117,15 +75,6 @@ class BloomFilter:
                 self.collisions[index] = True
             else:
                 self.bit[index] = True
-
-    '''
-    def delete(self, n):
-        for i in range(self.k):
-            seed = self.seeds[i]
-            h = mmh3.hash(n, seed) & 0xffffffff # same thing as with add_collision
-            if self.collisions[h % self.m] is False:
-                self.bit[h % self.m] = False
-    '''
 
     def delete(self, n):
         for i in range(self.k):
