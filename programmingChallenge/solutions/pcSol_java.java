@@ -213,8 +213,8 @@ public class pcSol_java {
             if (packetCount == 0)
                 currentIP = ipin;
         
-            if (currentIP.equals(ipin)) {
-                // System.out.println(badMessages);
+            if (!currentIP.equals(ipin)) {
+                 //System.out.println(ipin);
                 // cout << badMessages << '\n';
                 if (badMessages >= 3) {
                     if (goodIPs.contains(currentIP))
@@ -265,7 +265,7 @@ public class pcSol_java {
                 res = res + "1";
             }
         }
-        System.out.println(res);
+        System.out.print(res);
 
         scanner.close();
     }
