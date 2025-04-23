@@ -1,5 +1,6 @@
 These tests are extremely difficult to generate manually
 The provided file testMaker.cpp created all tests in this directory, but some were modified to be more interesting and explore edge cases
+Additionally, testMaker2.cpp was used to make extra cases with a different form. Some internal values were modified and not saved to generate the cases.
 
 ./testMaker takes 0 or 4 command line paramters being a, b, p, and u in order as defined by the writeup
 If no arguments are given, the default is the max size, which is far too large to push to git

@@ -89,10 +89,10 @@ int main(int argc, char *argv[]) {
     std::mt19937_64 eng(rd()); 
     std::uniform_int_distribution<unsigned long long> distr;
   
-    long long a = (distr(eng) + 2) % (long)(pow(2, 20));
-    long long b = (distr(eng) + 2) % (long)(pow(2, 11));
-    long long p = (distr(eng) + 4) % (long)(pow(2, 500));
-    long long u = (distr(eng) + 2) % (long)(pow(2, 20));
+    long long a = (distr(eng) + 2) % (long)(pow(2, 10)) + 2;
+    long long b = (distr(eng) + 2) % (long)(pow(2, 10)) + 2;
+    long long p = (distr(eng) + 4) % (long)(pow(2, 10)) + 4;
+    long long u = (distr(eng) + 2) % (long)(pow(2, 10)) + 2;
 
     if (argc >= 2) {
         a = stoll(argv[1]);
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
     unordered_set<int> goodIP;
     vector<int> ips;
     while (p > 0) {
-        int size = rand() % (p) + 1;
+        int size = rand() % (4) + 1;
         p -= size;
         vector<Packet> packets;
         int ip;
