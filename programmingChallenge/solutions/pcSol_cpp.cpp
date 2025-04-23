@@ -13,8 +13,6 @@ inline void hash_combine(std::size_t& seed, const T& v)
     seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 }
 
-int IPMASK = 0xffffffff;
-
 class bloomFilter {
     public:
     vector<bool> bit;
@@ -44,6 +42,7 @@ class bloomFilter {
         setSeeds(k);
     }
 
+    // makes a bloom filter with a collision array, allowing for deletions with no false negatives
     bloomFilter(int n, bool col) {
         this->m = this->getMByP(0.01, n);
         this->n = n;
@@ -104,7 +103,7 @@ class bloomFilter {
         return (int)((this->m / this->n) * log(2));
     }
 
-    // method to add an int
+    // method to add a value
     void add(string n) {
         for (int i = 0; i < k; ++i) {
             size_t s = this->seeds[i];
@@ -113,7 +112,12 @@ class bloomFilter {
         }
     }
 
-    // method to add an int that can be deleted
+    /* 
+    * method to add a value that can be deleted
+    * this is done by checking if the index that would be set
+    * to true is already true, and then setting the collision
+    * array to true in that location instead
+    */
     void addCollision(string n) {
         for (int i = 0; i < k; ++i) {
             size_t s = this->seeds[i];
@@ -125,23 +129,22 @@ class bloomFilter {
         }
     }
 
+    // delete method checks against collision array, and resets bits with no collisions
     void del(string n) {
         for (int i = 0; i < k; ++i) {
             size_t s = this->seeds[i];
             hash_combine(s, n);
-            if (this->collisions[s % m] == false) {
+            if (this->collisions[s % m] == false) {  // checks if multiple added values correspond to a single index
                 this->bit[s % m] = false;
             }
         }
     }
 
-
+    // checks if a value is present by verifying it against all indices it hashes to
     bool contains(string n) {
-
         for(int i = 0; i < k; i++) {
             size_t s = this->seeds[i];
             hash_combine(s, n);
-
             if (bit[s % m] == false) {
                 return false;
             }
@@ -150,21 +153,16 @@ class bloomFilter {
     }
 };
 
-int getData(long long packet) {
-    return IPMASK & packet;
-}
-
-int getIP(long long packet) {
-    return IPMASK & (packet >> 32);
-}
-
 int main() {
     int numBadIP, numBadData, numPackets, numChecks;
     cin >> numBadIP;
 
     bloomFilter badIPs;
+
+    // all below lines that follow this syntax construct a bloom filter with error rate 0.0001%, resulting in fairly accurate results
     badIPs = bloomFilter((float)0.00001, numBadIP);
 
+    // adds all read in bad IPs to badIPs bloom filter for later comparisons
     for (int i = 0; i < numBadIP; i++) {
         string badIP;
         cin >> badIP;
@@ -176,6 +174,7 @@ int main() {
     bloomFilter badData;
     badData = bloomFilter((float)0.00001, numBadData);
     
+    // adds all read in bad data to badData bloom filter
     for (int i = 0; i < numBadData; i++) {
         string bD;
         cin >> bD;
@@ -190,71 +189,74 @@ int main() {
     int packetCount = 0;
     string currentIP = "";
 
+    // this is the important section that handles deletions and insertions
     while (packetCount < numPackets) {
         string p;
         cin >> p;
+
+        // separates packet into ip and data
         string ipin = p.substr(0, 32);
         string data = p.substr(32, 32);
 
+        // initializes packetCount
         if (packetCount == 0)
             currentIP = ipin;
-
         
-
-    
+        // checks if IP has changed from last line of input, indicating the end of a block
         if (currentIP != ipin) {
-            // cout << badMessages << '\n';
+            // check for if the last block contained more than 3 bad messages
             if (badMessages >= 3) {
+                // check if already in goodIPs. 
+                // if it is not and would collide with a member, would create false negatives, which is undesireable
                 if (goodIPs.contains(currentIP))
                     goodIPs.del(currentIP);
                 badIPs.add(currentIP);
             }
             else {
-                //cout << currentIP << '\n';
+                // same with this, if the IP is already in the bad category, even if it is a collision, it will stay there
+                // so no reason to add it to the good bloom filter as this can prevent values from being removed in the future
                 if (!badIPs.contains(currentIP))
                     goodIPs.addCollision(currentIP);
-
             }
+
+            // resets tracking variables
             badMessages = 0;
             currentIP = ipin;
         }
 
+        // increment counter if data is in the bad data bloom filter
         if (badData.contains(data)) {
-            // cout << data << '\n';
             badMessages++;
         }
 
         packetCount++;
 
+        // catches last line of input edge case, same logic as above
         if (packetCount == numPackets) {
-
             if (badMessages >= 3) {
-                goodIPs.del(ipin);
+                if (goodIPs.contains(currentIP))
+                    goodIPs.del(ipin);
                 badIPs.add(ipin);
             }
             else
-                goodIPs.add(ipin);
+                if (!badIPs.contains(currentIP))
+                    goodIPs.add(ipin);
         }
-        //goodIPs.addCollision(ipin);
-
     }
 
     cin >> numChecks;
-    //  cout << numChecks << '\n';
 
+    // simple check for membership after setting all members previously
+    // badIPs is done first to ensure that if there is a collision and a value is 
+    // a member of both, it defaults to bad per the writeup
     for (int i = 0; i < numChecks; i++) {
         string ip;
         cin >> ip;
-        //  cout << ip << '\n';
         if (badIPs.contains(ip))
             cout << 0;
         else if (goodIPs.contains(ip))
             cout << 1;
     }
-
-    // for (int i = 0; i < goodIPs.m; i++) {
-    //     cout << goodIPs.bit[i] << ", ";
-    // }
 
     return 0;
 }
