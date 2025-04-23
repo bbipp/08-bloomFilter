@@ -7,10 +7,8 @@ IPMASK = 0xffffffff
 random.seed(42)
 
 def hash_combine(seed, v):
-    # Compute the hash of v using the built-in hash function
-    v_hash = hash(v)
-    # Combine using similar math to the C++ version:
-    #   seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    v_hash = mmh3.hash(v, seed) & 0xffffffff
+    #new_seed = seed ^ (v_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2))
     new_seed = seed ^ (v_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2))
     return new_seed
 
